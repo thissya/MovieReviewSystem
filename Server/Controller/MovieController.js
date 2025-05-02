@@ -5,9 +5,9 @@ const Review = require("../Model/ReviewSchema");
 const getAllMovies = async (req, res) => {
   try {
     const movies = await Movie.find();
-    res.status(200).json(movies);
+    return res.status(200).json(movies);
   } catch (err) {
-    res.status(500).json({ message: "Error in Fetching Movies" });
+    return res.status(500).json({ message: "Error in Fetching Movies" });
   }
 };
 
@@ -44,13 +44,13 @@ const addMovie = async (req, res) => {
     });
 
     await newMovie.save();
-    res.status(201).json({
+    return res.status(201).json({
       message: "Movie added successfully",
       movie: newMovie,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to add movie" });
+    return res.status(500).json({ message: "Failed to add movie" });
   }
 };
 
@@ -64,9 +64,9 @@ const addReview = async (req, res) => {
       rating,
     });
 
-    res.status(201).json(review);
+    return res.status(201).json(review);
   } catch (err) {
-    res.status(500).json({ message: "Error in Adding the Review" });
+    return res.status(500).json({ message: "Error in Adding the Review" });
   }
 };
 
@@ -75,11 +75,11 @@ const getMovieByName = async (req, res) => {
   try {
     const movies = await Movie.find({ title: { $regex: name, $options: "i" } });
     if (movies.length === 0) {
-      res.status(404).json({ message: "No Movies Found" });
+      return res.status(404).json({ message: "No Movies Found" });
     }
-    res.status(200).json(movie);
+    return res.status(200).json(movie);
   } catch (err) {
-    res.status(500).json({ message: "Error Searching Movie" });
+    return res.status(500).json({ message: "Error Searching Movie" });
   }
 };
 
@@ -91,17 +91,17 @@ const getReviewsByMovie = async (req, res) => {
       title: { $regex: movieName, $options: "i" },
     });
     if (!movie) {
-      res.status(404).json({ message: "Movie Not Found" });
+      return res.status(404).json({ message: "Movie Not Found" });
     }
 
     const reviews = await Review.find({ movie: movie._id })
       .populate("User", "userName")
       .populate("Movie", "title");
 
-    res.status(200).json(reviews);
+    return res.status(200).json(reviews);
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Error Fetching Reviews" });
+    return res.status(500).json({ message: "Error Fetching Reviews" });
   }
 };
 

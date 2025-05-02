@@ -1,13 +1,16 @@
 const mongoose = require('mongoose')
 const express = require('express')
 const cors =  require('cors')
-const Router = express.Router;
-
+const router =  require('./Routes/routes')
 require('dotenv').config()
+const morgan =require('morgan')
 
 const app = express();
 
 app.use(cors());
+app.use(express.json())
+
+app.use(morgan('dev'))
 
 const url = process.env.MONGO_URL
 mongoose.connect(url).then(()=>{
@@ -15,6 +18,8 @@ mongoose.connect(url).then(()=>{
 }).catch((err)=>{
     console.log("Mongo DB Connection Error : ",err.message);
 });
+
+app.use('/api',router);
 
 const Port = 3000
 
