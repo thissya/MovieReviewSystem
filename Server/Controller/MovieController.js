@@ -31,6 +31,24 @@ const addMovie = async (req, res) => {
       releaseDate,
     } = req.body;
 
+    if (
+      !title ||
+      !description ||
+      !directorName ||
+      !castAndCrew ||
+      !musicDirector ||
+      !producer ||
+      !genre ||
+      !releaseDate
+    ) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided." });
+    }
+    const movieExists = await Movie.findOne({ title });
+    if (movieExists) {
+      return res.status(404).json({ message: "Movie Already Exists" });
+    }
     const newMovie = new Movie({
       title,
       description,
@@ -57,6 +75,28 @@ const addMovie = async (req, res) => {
 const addReview = async (req, res) => {
   try {
     const { movieId, comment, rating } = req.body;
+
+    if (!movieId || !comment || !rating) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!req.user || !req.user._id) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not authenticated" });
+    }
+
+    const movie = await Movie.findById(movieId);
+    if (!movie) {
+      return res.status(404).json({ message: "Movie not found" });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
+    }
+
     const review = await Review.create({
       movie: movieId,
       user: req.user._id,
@@ -64,7 +104,10 @@ const addReview = async (req, res) => {
       rating,
     });
 
-    return res.status(201).json(review);
+    return res.status(201).json({
+      message: "Review added successfully",
+      review,
+    });
   } catch (err) {
     return res.status(500).json({ message: "Error in Adding the Review" });
   }
@@ -84,25 +127,36 @@ const getMovieByName = async (req, res) => {
 };
 
 const getReviewsByMovie = async (req, res) => {
-  const { movieName } = req.params;
+  const { movieName } = req.body;
 
   try {
+    console.log("Movie name from params:", movieName);
+
     const movie = await Movie.findOne({
       title: { $regex: movieName, $options: "i" },
     });
+    console.log("Movie found:", movie);
+
     if (!movie) {
       return res.status(404).json({ message: "Movie Not Found" });
     }
 
     const reviews = await Review.find({ movie: movie._id })
-      .populate("User", "userName")
-      .populate("Movie", "title");
+      .populate("user", "userName")
+      .populate("movie", "title");
+    console.log("Reviews found:", reviews);
 
     return res.status(200).json(reviews);
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching reviews:", error.message);
     return res.status(500).json({ message: "Error Fetching Reviews" });
   }
 };
 
-module.exports = {getAllMovies,getMovieByName,getReviewsByMovie,addReview,addMovie}
+module.exports = {
+  getAllMovies,
+  getMovieByName,
+  getReviewsByMovie,
+  addReview,
+  addMovie,
+};
